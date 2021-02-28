@@ -14,6 +14,15 @@ public interface UserPointAccountManager {
 
     int update(UserPointAccountDO userPointAccount);
 
+    /**
+     * 增加可用积分
+     *
+     * @param userId
+     * @param pointType
+     * @param availablePoints
+     */
     void increasePoints(String userId, String pointType, Long availablePoints);
+
+    Long queryAvailablePoint(String userId, String pointType);
 
 }

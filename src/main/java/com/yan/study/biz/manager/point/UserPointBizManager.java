@@ -70,4 +70,13 @@ public interface UserPointBizManager {
      */
     BaseResult<Void> consumeFreezePoint(String userId, String pointType, String freezeRecordCode);
 
+    /**
+     * 查询可用积分
+     *
+     * @param userId 精灵id
+     * @param pointType 积分类型
+     * @return 可用积分数量
+     */
+    BaseResult<Long> queryAvailablePoint(String userId, String pointType);
+
 }

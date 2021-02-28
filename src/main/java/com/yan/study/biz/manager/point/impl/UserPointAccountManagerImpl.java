@@ -1,11 +1,18 @@
 package com.yan.study.biz.manager.point.impl;
 
+import com.yan.study.biz.dao.point.UserPointAccountDAO;
 import com.yan.study.biz.dao.point.entity.UserPointAccountDO;
 import com.yan.study.biz.manager.point.UserPointAccountManager;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
-@Service
+import javax.annotation.Resource;
+
+@Component
 public class UserPointAccountManagerImpl implements UserPointAccountManager {
+
+    @Resource
+    private UserPointAccountDAO userPointAccountDAO;
 
     @Override
     public void insert(UserPointAccountDO userPointAccount) {
@@ -37,7 +44,12 @@ public class UserPointAccountManagerImpl implements UserPointAccountManager {
 
     @Override
     public void increasePoints(String userId, String pointType, Long availablePoints) {
+        userPointAccountDAO.increasePoints(userId, pointType, availablePoints);
+    }
 
+    @Override
+    public Long queryAvailablePoint(String userId, String pointType) {
+        return userPointAccountDAO.queryAvailablePoint(userId, pointType);
     }
 
 }

@@ -75,7 +75,6 @@ public class UserPointBizManagerImpl implements UserPointBizManager {
                 return BaseResult.fail("无效的积分类型");
             }
 
-            // 1. 更新明细表
             UserPointDetailDO userPointDetail = userPointDetailManager.queryByDetailCode(detailCode);
             if (userPointDetail == null) {
                 return BaseResult.fail("无效的明细code");
@@ -86,6 +85,8 @@ public class UserPointBizManagerImpl implements UserPointBizManager {
             if (now.after(userPointDetail.getInvalidTime())) {
                 return BaseResult.fail("已失效, 不可领取");
             }
+
+            // 更新明细表
             userPointDetail.setAvailablePoints(userPointDetail.getGivePoints());
             userPointDetail.setDetailStatus(UserPointDetailStatus.RECEIVED.getStatus());
             userPointDetail.setEffectTime(new Date());
@@ -110,7 +111,15 @@ public class UserPointBizManagerImpl implements UserPointBizManager {
     @Override
     public BaseResult<Void> givePoint(String userId, String pointType, Long points, String idempotentId, String reason) {
         try {
-            // 0.1 幂等判断
+            // 幂等
+            if (userPointRedisClient.preGivePointIdem(idempotentId)) {
+                UserPointDetailDO userPointDetail = userPointDetailManager.queryByUserIdAndIdempotentId(userId, idempotentId);
+                if (userPointDetail == null) {
+                    // TODO: 2021/2/19 redis幂等与数据库不一致, 报警
+                    return BaseResult.fail("请稍后重试");
+                }
+                return BaseResult.success(null);
+            }
 
             // 校验积分类型
             PointConfigDO pointConfig = pointConfigManager.getPointConfig(pointType);
@@ -119,7 +128,7 @@ public class UserPointBizManagerImpl implements UserPointBizManager {
                 return BaseResult.fail("无效的积分类型");
             }
 
-            // 2. 创建积分明细
+            // 创建积分明细
             UserPointDetailDO userPointDetail = new UserPointDetailDO();
             userPointDetail.setUserId(userId);
             userPointDetail.setPointType(pointType);
@@ -135,7 +144,7 @@ public class UserPointBizManagerImpl implements UserPointBizManager {
             userPointAccountManager.increasePoints(userId, pointType, userPointDetail.getAvailablePoints());
 
             // 4. 合并积分
-            mergePoint(userId, userPointDetail );
+            mergePoint(userId, userPointDetail);
 
             return BaseResult.success(null);
         } catch (Exception e) {
@@ -147,11 +156,23 @@ public class UserPointBizManagerImpl implements UserPointBizManager {
     public BaseResult<String> freezePoint(String userId, String pointType, Long freezePoints, String idempotentId, String reason) {
         try {
             Date now = new Date();
-            // 检验幂等id
+            // 幂等判断
+            if (userPointRedisClient.preGivePointIdem(idempotentId)) {
+                UserPointDetailDO userPointDetail = userPointDetailManager.queryByUserIdAndIdempotentId(userId, idempotentId);
+                if (userPointDetail == null) {
+                    // TODO: 2021/2/19 redis幂等与数据库不一致, 报警
+                    return BaseResult.fail("请稍后重试");
+                }
+                return BaseResult.success(null);
+            }
 
             // 校验积分类型
+            PointConfigDO pointConfig = pointConfigManager.getPointConfig(pointType);
+            if (!validPointConfig(pointConfig)) {
+                return BaseResult.fail("无效的积分类型");
+            }
 
-            // 1.更新用户账户
+            // 更新用户账户
             UserPointAccountDO userPointAccount = userPointAccountManager.initAndGet(userId, pointType);
             if (userPointAccount.getAvailablePoint() < freezePoints) {
                 return BaseResult.fail("可用积分不足");
@@ -163,14 +184,14 @@ public class UserPointBizManagerImpl implements UserPointBizManager {
                 throw new PointSystemException("并发更新用户账户");
             }
 
-            // 4. 新增冻结记录
+            // 新增冻结记录
             UserPointFreezeRecordDO freezeRecord = userPointFreezeRecordManager.createFreezeRecord(userId, pointType,
                 idempotentId, reason, freezePoints, now, UserPointFreezeRecordStatus.FREEZED);
 
-            // 2.查询积分明细
+            // 查询积分明细
             List<UserPointDetailDO> userPointDetailList = userPointDetailManager.queryAvailablePointRecord(userId, pointType);
 
-            // 3.冻结积分明细
+            // 冻结积分明细
             // 全部冻结列表
             List<UserPointDetailDO> allFreezeList = new ArrayList<>();
             // K: detailCode V: points
@@ -196,12 +217,12 @@ public class UserPointBizManagerImpl implements UserPointBizManager {
                 }
             }
 
-            // 3.2 冻结全部冻结列表
+            // 冻结全部冻结列表
             if (!CollectionUtils.isEmpty(allFreezeList)) {
                 userPointDetailManager.freezeDetailWithAll(allFreezeList);
             }
 
-            // 5. 新增冻结明细记录
+            // 新增冻结明细记录
             for (String detailCode : detailCodeMap.keySet()) {
                 UserPointFreezeRecordDetailDO userPointFreezeRecordDetail = new UserPointFreezeRecordDetailDO();
                 userPointFreezeRecordDetail.setUserId(userId);
@@ -221,6 +242,13 @@ public class UserPointBizManagerImpl implements UserPointBizManager {
     @Override
     public BaseResult<Void> unfreezePoint(String userId, String pointType, String freezeRecordCode) {
         try {
+            // 校验积分类型
+            PointConfigDO pointConfig = pointConfigManager.getPointConfig(pointType);
+
+            if (!validPointConfig(pointConfig)) {
+                return BaseResult.fail("无效的积分类型");
+            }
+
             // 查询冻结记录, 判断状态
             UserPointFreezeRecordDO freezeRecord = userPointFreezeRecordManager.queryByCode(userId, freezeRecordCode);
 
@@ -234,7 +262,7 @@ public class UserPointBizManagerImpl implements UserPointBizManager {
                 return BaseResult.fail("已消耗");
             }
 
-            // 1. 更新用户账户
+            // 更新用户账户
             UserPointAccountDO userPointAccount = userPointAccountManager.initAndGet(userId, pointType);
             userPointAccount.setFreezePoint(userPointAccount.getFreezePoint() - freezeRecord.getFreezePoints());
             userPointAccount.setAvailablePoint(userPointAccount.getAvailablePoint() + freezeRecord.getFreezePoints());
@@ -243,7 +271,7 @@ public class UserPointBizManagerImpl implements UserPointBizManager {
                 throw new PointSystemException("并发更新积分账户");
             }
 
-            // 2. 更新冻结记录
+            // 更新冻结记录
             freezeRecord.setFreezeRecordStatus(UserPointFreezeRecordStatus.UNFROZE.getStatus());
             i = userPointFreezeRecordManager.update(freezeRecord);
             if (i < 1) {
@@ -259,6 +287,11 @@ public class UserPointBizManagerImpl implements UserPointBizManager {
     @Override
     public BaseResult<Void> consumeFreezePoint(String userId, String pointType, String freezeRecordCode) {
         return null;
+    }
+
+    @Override
+    public BaseResult<Long> queryAvailablePoint(String userId, String pointType) {
+        return BaseResult.success(userPointAccountManager.queryAvailablePoint(userId, pointType));
     }
 
     /**
@@ -299,19 +332,23 @@ public class UserPointBizManagerImpl implements UserPointBizManager {
             int i = 0;
             // 如果有则合并进去
             if (UserPointDetailStatus.RECEIVED.getStatus().equals(mergeDetail.getDetailStatus())) {
+                // 已领取
                 mergeDetail.setGivePoints(mergeDetail.getGivePoints() + userPointDetail.getGivePoints());
                 mergeDetail.setAvailablePoints(mergeDetail.getAvailablePoints() + userPointDetail.getAvailablePoints());
                 i = userPointDetailManager.update(mergeDetail);
             } else if (UserPointDetailStatus.FROZEN.getStatus().equals(mergeDetail.getDetailStatus())) {
+                // 已冻结
                 mergeDetail.setGivePoints(mergeDetail.getGivePoints() + userPointDetail.getGivePoints());
                 mergeDetail.setAvailablePoints(mergeDetail.getAvailablePoints() + userPointDetail.getAvailablePoints());
                 mergeDetail.setDetailStatus(UserPointDetailStatus.PART_FROZEN.getStatus());
                 i = userPointDetailManager.update(mergeDetail);
             } else if (UserPointDetailStatus.PART_FROZEN.getStatus().equals(mergeDetail.getDetailStatus())) {
+                // 部分冻结
                 mergeDetail.setGivePoints(mergeDetail.getGivePoints() + userPointDetail.getGivePoints());
                 mergeDetail.setAvailablePoints(mergeDetail.getAvailablePoints() + userPointDetail.getAvailablePoints());
                 i = userPointDetailManager.update(mergeDetail);
             } else if (UserPointDetailStatus.CONSUMED.getStatus().equals(mergeDetail.getDetailStatus())) {
+                // 已消耗
                 mergeDetail.setGivePoints(mergeDetail.getGivePoints() + userPointDetail.getGivePoints());
                 mergeDetail.setAvailablePoints(mergeDetail.getAvailablePoints() + userPointDetail.getAvailablePoints());
                 mergeDetail.setDetailStatus(UserPointDetailStatus.RECEIVED.getStatus());
