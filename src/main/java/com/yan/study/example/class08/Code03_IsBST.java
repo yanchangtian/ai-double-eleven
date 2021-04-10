@@ -1,4 +1,4 @@
-package class08;
+package com.yan.study.example.class08;
 
 import java.util.ArrayList;
 
@@ -74,9 +74,9 @@ public class Code03_IsBST {
 		}
 		boolean isBST = false;
 		if (
-			(leftInfo == null ? true : (leftInfo.isBST && leftInfo.max < head.value))
+			(leftInfo == null || (leftInfo.isBST && leftInfo.max < head.value))
 			&&
-		    (rightInfo == null ? true : (rightInfo.isBST && rightInfo.min > head.value))
+		    (rightInfo == null || (rightInfo.isBST && rightInfo.min > head.value))
 		    		) {
 			isBST = true;
 		}
@@ -105,11 +105,44 @@ public class Code03_IsBST {
 		int testTimes = 1000000;
 		for (int i = 0; i < testTimes; i++) {
 			Node head = generateRandomBST(maxLevel, maxValue);
-			if (isBST1(head) != isBST2(head)) {
+			if (isBST1(head) != isBST3(head)) {
 				System.out.println("Oops!");
 			}
 		}
 		System.out.println("finish!");
+	}
+
+	public static boolean isBST3(Node root) {
+		return isBST(root) == null || isBST(root).isBST;
+	}
+
+	public static Info isBST(Node root) {
+		if (root == null) {
+			return null;
+		}
+		Info lInfo = isBST(root.left);
+		Info rInfo = isBST(root.right);
+
+		int min = root.value;
+		int max = root.value;
+
+		if (lInfo != null) {
+			min = Math.min(min, lInfo.min);
+			max = Math.max(max, lInfo.max);
+		}
+
+		if (rInfo != null) {
+			min = Math.min(min, rInfo.min);
+			max = Math.max(max, rInfo.max);
+		}
+
+		boolean isBST = false;
+
+		if ((lInfo == null || lInfo.isBST && lInfo.max < root.value) && (rInfo == null || rInfo.isBST && rInfo.min > root.value)) {
+			isBST = true;
+		}
+
+		return new Info(isBST, min, max);
 	}
 
 }

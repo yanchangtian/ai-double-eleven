@@ -1,7 +1,10 @@
-package class08;
+package com.yan.study.example.class08;
 
 import java.util.ArrayList;
 
+/**
+ * 最大子搜索树
+ */
 public class Code04_MaxSubBSTSize {
 
 	public static class Node {

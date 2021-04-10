@@ -1,4 +1,4 @@
-package class10;
+package com.yan.study.example.class10;
 
 import java.util.HashSet;
 import java.util.LinkedList;
