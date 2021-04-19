@@ -6,7 +6,7 @@ import java.util.Queue;
 /**
  * 序列化和反序列化一棵二叉树
  */
-public class Code04_SerializeAndReconstructTree {
+public class Code04_SerializeAndReconstructTree_Test {
 
 	public static class Node {
 		public int value;
@@ -19,9 +19,9 @@ public class Code04_SerializeAndReconstructTree {
 	}
 
 	public static Queue<String> preSerial(Node head) {
-		Queue<String> ans = new LinkedList<>();
-		pres(head, ans);
-		return ans;
+		Queue<String> queue = new LinkedList<>();
+		pres(head, queue);
+		return queue;
 	}
 
 	public static void pres(Node head, Queue<String> ans) {
@@ -35,9 +35,6 @@ public class Code04_SerializeAndReconstructTree {
 	}
 
 	public static Node buildByPreQueue(Queue<String> prelist) {
-		if (prelist == null || prelist.size() == 0) {
-			return null;
-		}
 		return preb(prelist);
 	}
 

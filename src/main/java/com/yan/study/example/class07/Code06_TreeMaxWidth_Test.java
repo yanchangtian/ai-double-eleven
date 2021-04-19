@@ -2,9 +2,10 @@ package com.yan.study.example.class07;
 
 import java.util.HashMap;
 import java.util.LinkedList;
+import java.util.Map;
 import java.util.Queue;
 
-public class Code06_TreeMaxWidth {
+public class Code06_TreeMaxWidth_Test {
 
 	public static class Node {
 		public int value;
@@ -18,66 +19,73 @@ public class Code06_TreeMaxWidth {
 
 	public static int maxWidthUseMap(Node head) {
 		if (head == null) {
-			return 0;
+
 		}
 		Queue<Node> queue = new LinkedList<>();
 		queue.add(head);
-		HashMap<Node, Integer> levelMap = new HashMap<>();
+		Map<Node, Integer> levelMap = new HashMap<>();
 		levelMap.put(head, 1);
 		int curLevel = 1;
-		int curLevelNodes = 0;
-		int max = 0;
+		int curLevelSize = 0;
+		int maxLevelSize = 0;
 		while (!queue.isEmpty()) {
-			Node cur = queue.poll();
-			int curNodeLevel = levelMap.get(cur);
-			if (cur.left != null) {
-				levelMap.put(cur.left, curNodeLevel + 1);
-				queue.add(cur.left);
+			Node poll = queue.poll();
+			Integer level = levelMap.get(poll);
+			if (poll.left != null) {
+				queue.add(poll.left);
+				levelMap.put(poll.left, level + 1);
 			}
-			if (cur.right != null) {
-				levelMap.put(cur.right, curNodeLevel + 1);
-				queue.add(cur.right);
+			if (poll.right != null) {
+				queue.add(poll.right);
+				levelMap.put(poll.right, level + 1);
 			}
-			if (curNodeLevel == curLevel) {
-				curLevelNodes++;
+
+			if (level == curLevel) {
+				curLevelSize++;
 			} else {
-				max = Math.max(max, curLevelNodes);
-				curLevel++;
-				curLevelNodes = 1;
+				curLevel = level;
+				maxLevelSize = Math.max(maxLevelSize, curLevelSize);
+				curLevelSize = 0;
 			}
+
 		}
-		max = Math.max(max, curLevelNodes);
-		return max;
+		maxLevelSize = Math.max(maxLevelSize, curLevelSize);
+		return maxLevelSize;
+
 	}
 
 	public static int maxWidthNoMap(Node head) {
-		if (head == null) {
-			return 0;
-		}
+
 		Queue<Node> queue = new LinkedList<>();
 		queue.add(head);
-		Node curEnd = head;
-		Node nextEnd = null;
-		int max = 0;
-		int curLevelNodes = 0;
+
+		Node curEndNode = head;
+		Node nextEndNode = null;
+		int curLevelSize = 0;
+		int maxLevelSize = 0;
+
 		while (!queue.isEmpty()) {
-			Node cur = queue.poll();
-			if (cur.left != null) {
-				queue.add(cur.left);
-				nextEnd = cur.left;
+			Node poll = queue.poll();
+
+			if (poll.left != null) {
+				queue.add(poll.left);
+				nextEndNode = poll.left;
 			}
-			if (cur.right != null) {
-				queue.add(cur.right);
-				nextEnd = cur.right;
+
+			if (poll.right != null) {
+				queue.add(poll.right);
+				nextEndNode = poll.right;
 			}
-			curLevelNodes++;
-			if (cur == curEnd) {
-				max = Math.max(max, curLevelNodes);
-				curLevelNodes = 0;
-				curEnd = nextEnd;
+
+			curLevelSize++;
+			if (poll == curEndNode) {
+				maxLevelSize = Math.max(maxLevelSize, curLevelSize);
+				curLevelSize = 0;
+				curEndNode = nextEndNode;
 			}
+
 		}
-		return max;
+		return maxLevelSize;
 	}
 
 	// for test
