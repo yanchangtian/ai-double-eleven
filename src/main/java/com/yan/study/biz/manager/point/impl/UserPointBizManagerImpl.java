@@ -263,17 +263,17 @@ public class UserPointBizManagerImpl implements UserPointBizManager {
             }
 
             // 更新用户账户
-            UserPointAccountDO userPointAccount = userPointAccountManager.initAndGet(userId, pointType);
-            userPointAccount.setFreezePoint(userPointAccount.getFreezePoint() - freezeRecord.getFreezePoints());
-            userPointAccount.setAvailablePoint(userPointAccount.getAvailablePoint() + freezeRecord.getFreezePoints());
-            int i = userPointAccountManager.update(userPointAccount);
-            if (i < 1) {
-                throw new PointSystemException("并发更新积分账户");
-            }
+//            UserPointAccountDO userPointAccount = userPointAccountManager.initAndGet(userId, pointType);
+//            userPointAccount.setFreezePoint(userPointAccount.getFreezePoint() - freezeRecord.getFreezePoints());
+//            userPointAccount.setAvailablePoint(userPointAccount.getAvailablePoint() + freezeRecord.getFreezePoints());
+//            int i = userPointAccountManager.update(userPointAccount);
+//            if (i < 1) {
+//                throw new PointSystemException("并发更新积分账户");
+//            }
 
             // 更新冻结记录
             freezeRecord.setFreezeRecordStatus(UserPointFreezeRecordStatus.UNFROZE.getStatus());
-            i = userPointFreezeRecordManager.update(freezeRecord);
+            int i = userPointFreezeRecordManager.update(freezeRecord);
             if (i < 1) {
                 throw new PointSystemException("并发修改冻结记录");
             }
@@ -286,7 +286,41 @@ public class UserPointBizManagerImpl implements UserPointBizManager {
 
     @Override
     public BaseResult<Void> consumeFreezePoint(String userId, String pointType, String freezeRecordCode) {
-        return null;
+        try{
+            // 校验积分类型
+            PointConfigDO pointConfig = pointConfigManager.getPointConfig(pointType);
+
+            if (!validPointConfig(pointConfig)) {
+                return BaseResult.fail("无效的积分类型");
+            }
+
+            // 查询冻结记录, 判断状态
+            UserPointFreezeRecordDO freezeRecord = userPointFreezeRecordManager.queryByCode(userId, freezeRecordCode);
+
+            if (freezeRecord == null) {
+                return BaseResult.fail("冻结记录不存在");
+            }
+            if (UserPointFreezeRecordStatus.UNFROZE.getStatus().equals(freezeRecord.getFreezeRecordStatus())) {
+                return BaseResult.fail("已解冻");
+            }
+            if (UserPointFreezeRecordStatus.CONSUMED.getStatus().equals(freezeRecord.getFreezeRecordStatus())) {
+                return BaseResult.fail("已消耗");
+            }
+
+            // 更新用户账户 目测更新用户账户表中的冻结积分字段没有意义
+//            UserPointAccountDO userPointAccount = userPointAccountManager.initAndGet(userId, pointType);
+//            userPointAccount.setFreezePoint(userPointAccount.getFreezePoint() - freezeRecord.getFreezePoints());
+//            userPointAccount.setAvailablePoint(userPointAccount.getAvailablePoint() + freezeRecord.getFreezePoints());
+//            int i = userPointAccountManager.update(userPointAccount);
+//            if (i < 1) {
+//                throw new PointSystemException("并发更新积分账户");
+//            }
+
+            return BaseResult.success(null);
+
+        } catch (Exception e) {
+            return BaseResult.fail("解冻失败");
+        }
     }
 
     @Override
