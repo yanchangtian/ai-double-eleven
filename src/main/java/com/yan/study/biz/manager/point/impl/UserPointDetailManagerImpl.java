@@ -2,12 +2,19 @@ package com.yan.study.biz.manager.point.impl;
 
 import com.yan.study.biz.common.PointSystemException;
 import com.yan.study.biz.common.UserPointDetailStatus;
+import com.yan.study.biz.dao.point.UserPointDetailDAO;
 import com.yan.study.biz.dao.point.entity.UserPointDetailDO;
 import com.yan.study.biz.manager.point.UserPointDetailManager;
+import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import java.util.List;
 
+@Component
 public class UserPointDetailManagerImpl implements UserPointDetailManager {
+
+    @Resource
+    private UserPointDetailDAO userPointDetailDAO;
 
     @Override
     public void insert(UserPointDetailDO userPointDetail) {

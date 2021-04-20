@@ -1,5 +1,8 @@
 package com.yan.study.biz.common;
 
+import lombok.ToString;
+
+@ToString
 public class BaseResult<R> {
 
     private Integer code;

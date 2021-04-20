@@ -3,11 +3,13 @@ package com.yan.study.biz.manager.point.impl;
 import com.yan.study.biz.common.*;
 import com.yan.study.biz.dao.point.entity.*;
 import com.yan.study.biz.manager.point.*;
+import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
 
 import javax.annotation.Resource;
 import java.util.*;
 
+@Component
 public class UserPointBizManagerImpl implements UserPointBizManager {
 
     @Resource

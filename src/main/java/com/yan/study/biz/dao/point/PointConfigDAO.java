@@ -7,7 +7,7 @@ import org.apache.ibatis.annotations.Select;
 public interface PointConfigDAO {
 
     String ALL_COLUMN = "id, point_type as pointType, point_name as pointName, point_desc as pointDesc, " +
-        "preGive_invalid_type as preGiveInvalidType, expire_type as expireType";
+        "pre_give_invalid_type as preGiveInvalidType, expire_type as expireType";
 
     String TABLE_NAME = "point_config";
 

@@ -55,7 +55,7 @@ public class PointConfigDO {
      * @return 积分过期时间
      */
     public Date calcPointExpireTime(Date receiveTime) {
-        return new Date();
+        return new Date(THREE_DAYS);
     }
 
 }

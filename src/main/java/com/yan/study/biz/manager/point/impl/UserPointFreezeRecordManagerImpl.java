@@ -3,10 +3,12 @@ package com.yan.study.biz.manager.point.impl;
 import com.yan.study.biz.common.UserPointFreezeRecordStatus;
 import com.yan.study.biz.dao.point.entity.UserPointFreezeRecordDO;
 import com.yan.study.biz.manager.point.UserPointFreezeRecordManager;
+import org.springframework.stereotype.Component;
 
 import java.util.Date;
 import java.util.UUID;
 
+@Component
 public class UserPointFreezeRecordManagerImpl implements UserPointFreezeRecordManager {
 
     @Override
