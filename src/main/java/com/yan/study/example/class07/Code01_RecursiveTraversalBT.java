@@ -1,4 +1,4 @@
-package class07;
+package com.yan.study.example.class07;
 
 public class Code01_RecursiveTraversalBT {
 

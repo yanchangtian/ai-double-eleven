@@ -36,6 +36,26 @@ public class Code03_LevelTraversalBT {
 		}
 	}
 
+	// 层序遍历
+	public static void level01(Node head) {
+		if (head == null) {
+			return;
+		}
+		Queue<Node> queue = new LinkedList<>();
+		queue.add(head);
+		while (!queue.isEmpty()) {
+			Node poll = queue.poll();
+			System.out.println(poll.value);
+			if (poll.left != null) {
+				queue.add(poll.left);
+			}
+			if (poll.right != null) {
+				queue.add(poll.right);
+			}
+		}
+
+	}
+
 	public static void main(String[] args) {
 		Node head = new Node(1);
 		head.left = new Node(2);

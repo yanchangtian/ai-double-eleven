@@ -1,4 +1,4 @@
-package class08;
+package com.yan.study.example.class08;
 
 public class Code02_IsFull {
 

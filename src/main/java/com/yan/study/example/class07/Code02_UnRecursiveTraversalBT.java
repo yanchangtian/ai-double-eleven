@@ -1,4 +1,4 @@
-package class07;
+package com.yan.study.example.class07;
 
 import java.util.Stack;
 
@@ -77,7 +77,7 @@ public class Code02_UnRecursiveTraversalBT {
 	public static void pos2(Node h) {
 		System.out.print("pos-order: ");
 		if (h != null) {
-			Stack<Node> stack = new Stack<Node>();
+			Stack<Node> stack = new Stack<>();
 			stack.push(h);
 			Node c = null;
 			while (!stack.isEmpty()) {
@@ -93,6 +93,50 @@ public class Code02_UnRecursiveTraversalBT {
 			}
 		}
 		System.out.println();
+	}
+
+	// 后序遍历 左右中
+	public static void post21(Node h) {
+		if (h == null) {
+			return;
+		}
+		Stack<Node> stack = new Stack<>();
+		stack.add(h);
+		Node c = null;
+		while (!stack.isEmpty()) {
+			c = stack.peek();
+			if (c.left != null && c.left != h && c.right != h) {
+				stack.add(c.left);
+			} else if (c.right != null && c.right != h) {
+				stack.add(c.right);
+			} else {
+				System.out.println(stack.pop().value);
+				h = c;
+			}
+		}
+	}
+
+	public static void post22(Node h) {
+		if (h == null) {
+			return;
+		}
+
+		Stack<Node> stack = new Stack<>();
+		stack.add(h);
+		Node c = null;
+
+		while (!stack.isEmpty()) {
+			c = stack.peek();
+			if (c.left != null && c.left != h && c.right != h) {
+				stack.add(c.left);
+			} else if (c.right != null && c.right != h) {
+				stack.add(c.right);
+			} else {
+				System.out.println(stack.pop().value);
+				h = c;
+			}
+		}
+
 	}
 
 	public static void main(String[] args) {

@@ -1,5 +1,8 @@
-package class08;
+package com.yan.study.example.class08;
 
+/**
+ * 是否为平衡二叉树
+ */
 public class Code01_IsBalanced {
 
 	public static class Node {
@@ -32,15 +35,15 @@ public class Code01_IsBalanced {
 	}
 
 	public static boolean isBalanced2(Node head) {
-		return process2(head).isBalaced;
+		return process2(head).isBalance;
 	}
 
 	public static class Info {
-		public boolean isBalaced;
+		public boolean isBalance;
 		public int height;
 
 		public Info(boolean b, int h) {
-			isBalaced = b;
+			isBalance = b;
 			height = h;
 		}
 	}
@@ -53,7 +56,7 @@ public class Code01_IsBalanced {
 		Info rightInfo = process2(head.right);
 		int height = Math.max(leftInfo.height, rightInfo.height) + 1;
 		boolean isBalanced = true;
-		if (!leftInfo.isBalaced || !rightInfo.isBalaced || Math.abs(leftInfo.height - rightInfo.height) > 1) {
+		if (!leftInfo.isBalance || !rightInfo.isBalance || Math.abs(leftInfo.height - rightInfo.height) > 1) {
 			isBalanced = false;
 		}
 		return new Info(isBalanced, height);
@@ -81,11 +84,38 @@ public class Code01_IsBalanced {
 		int testTimes = 1000000;
 		for (int i = 0; i < testTimes; i++) {
 			Node head = generateRandomBST(maxLevel, maxValue);
-			if (isBalanced1(head) != isBalanced2(head)) {
+			if (isBalanced1(head) != isBalance(head)) {
 				System.out.println("Oops!");
 			}
 		}
 		System.out.println("finish!");
+	}
+
+	public static boolean isBalance(Node root) {
+		return isBalance01(root) == null || isBalance01(root).isBalance;
+	}
+
+	public static Info isBalance01(Node root) {
+		if (root == null) {
+			return null;
+		}
+
+		Info leftInfo = isBalance01(root.left);
+		Info rightInfo = isBalance01(root.right);
+
+		int leftHeight = leftInfo == null ? 0 : leftInfo.height;
+		int rightHeight = rightInfo == null ? 0 : rightInfo.height;
+		boolean leftIsB = leftInfo == null || leftInfo.isBalance;
+		boolean rightIsB = rightInfo == null || rightInfo.isBalance;
+
+		boolean isBalance = false;
+		int height = Math.max(leftHeight, rightHeight) + 1;
+
+		if (leftIsB && rightIsB && Math.abs(leftHeight - rightHeight) < 2) {
+			isBalance = true;
+		}
+
+		return new Info(isBalance, height);
 	}
 
 }
