@@ -39,14 +39,15 @@ public class UserPointBizManagerImpl implements UserPointBizManager {
                 return BaseResult.success(userPointDetail.getDetailCode());
             }
 
-            // 获取积分类型配置
+            // 1.获取积分类型配置
             PointConfigDO pointConfig = pointConfigManager.getPointConfig(pointType);
-
             if (!validPointConfig(pointConfig)) {
                 return BaseResult.fail("无效的积分类型");
             }
 
-            // 用户积分明细信息
+            System.out.println("获取到的积分类型的id: " + pointConfig.getId());
+
+            // 2.用户积分明细信息
             UserPointDetailDO userPointDetail = new UserPointDetailDO();
             userPointDetail.setUserId(userId);
             userPointDetail.setPointType(pointType);
@@ -61,6 +62,7 @@ public class UserPointBizManagerImpl implements UserPointBizManager {
 
             return BaseResult.success(userPointDetail.getDetailCode());
         } catch (Exception e) {
+            System.out.println(e);
             return BaseResult.fail("预发放积分失败");
         }
     }
@@ -72,40 +74,42 @@ public class UserPointBizManagerImpl implements UserPointBizManager {
 
             // 校验积分类型
             PointConfigDO pointConfig = pointConfigManager.getPointConfig(pointType);
-
             if (!validPointConfig(pointConfig)) {
                 return BaseResult.fail("无效的积分类型");
             }
 
-            UserPointDetailDO userPointDetail = userPointDetailManager.queryByDetailCode(detailCode);
-            if (userPointDetail == null) {
+            UserPointDetailDO userPointDetailDO = userPointDetailManager.queryByDetailCode(userId, detailCode);
+            System.out.println(userPointDetailDO);
+            if (userPointDetailDO == null) {
                 return BaseResult.fail("无效的明细code");
             }
-            if (UserPointDetailStatus.RECEIVABLE.getStatus().equals(userPointDetail.getDetailStatus())) {
-                return BaseResult.fail("无效的明细code");
+            if (!UserPointDetailStatus.RECEIVABLE.getStatus().equals(userPointDetailDO.getDetailStatus())) {
+                return BaseResult.fail("非可领取状态");
             }
-            if (now.after(userPointDetail.getInvalidTime())) {
+            if (now.after(userPointDetailDO.getInvalidTime())) {
                 return BaseResult.fail("已失效, 不可领取");
             }
 
             // 更新明细表
-            userPointDetail.setAvailablePoints(userPointDetail.getGivePoints());
-            userPointDetail.setDetailStatus(UserPointDetailStatus.RECEIVED.getStatus());
-            userPointDetail.setEffectTime(new Date());
-            userPointDetail.setExpireTime(pointConfig.calcPointExpireTime(userPointDetail.getEffectTime()));
-            int i = userPointDetailManager.update(userPointDetail);
+            userPointDetailDO.setAvailablePoints(userPointDetailDO.getGivePoints());
+            userPointDetailDO.setGivePoints(0L);
+            userPointDetailDO.setDetailStatus(UserPointDetailStatus.RECEIVED.getStatus());
+            userPointDetailDO.setEffectTime(new Date());
+            userPointDetailDO.setExpireTime(pointConfig.calcPointExpireTime(userPointDetailDO.getEffectTime()));
+            int i = userPointDetailManager.update(userPointDetailDO);
             if (i < 1) {
                 throw new PointSystemException("并发修改积分明细");
             }
 
             // 2. 更新账户表
-            userPointAccountManager.increasePoints(userId, pointType, userPointDetail.getAvailablePoints());
+            userPointAccountManager.increasePoints(userId, pointType, userPointDetailDO.getAvailablePoints());
 
             // 3. 合并积分
-            mergePoint(userId, userPointDetail);
+            // mergePoint(userId, userPointDetailDO);
 
             return BaseResult.success(null);
         } catch (Exception e) {
+            System.out.println(e);
             return BaseResult.fail("领取积分失败");
         }
     }
@@ -134,22 +138,24 @@ public class UserPointBizManagerImpl implements UserPointBizManager {
             UserPointDetailDO userPointDetail = new UserPointDetailDO();
             userPointDetail.setUserId(userId);
             userPointDetail.setPointType(pointType);
+            userPointDetail.setDetailCode(UUID.randomUUID().toString().replace("-", ""));
             userPointDetail.setDetailStatus(UserPointDetailStatus.RECEIVED.getStatus());
-            userPointDetail.setGivePoints(points);
             userPointDetail.setAvailablePoints(points);
             userPointDetail.setEffectTime(new Date());
             userPointDetail.setExpireTime(pointConfig.calcPointExpireTime(userPointDetail.getEffectTime()));
             userPointDetail.setIdempotentId(idempotentId);
+            userPointDetail.setGiveReason(reason);
             userPointDetailManager.insert(userPointDetail);
 
             // 3. 积分账户表
             userPointAccountManager.increasePoints(userId, pointType, userPointDetail.getAvailablePoints());
 
             // 4. 合并积分
-            mergePoint(userId, userPointDetail);
+            // mergePoint(userId, userPointDetail);
 
             return BaseResult.success(null);
         } catch (Exception e) {
+            System.out.println(e);
             return BaseResult.fail("直接发放积分失败");
         }
     }
@@ -179,6 +185,7 @@ public class UserPointBizManagerImpl implements UserPointBizManager {
             if (userPointAccount.getAvailablePoint() < freezePoints) {
                 return BaseResult.fail("可用积分不足");
             }
+
             userPointAccount.setAvailablePoint(userPointAccount.getAvailablePoint() - freezePoints);
             userPointAccount.setFreezePoint(userPointAccount.getFreezePoint() + freezePoints);
             int i = userPointAccountManager.update(userPointAccount);

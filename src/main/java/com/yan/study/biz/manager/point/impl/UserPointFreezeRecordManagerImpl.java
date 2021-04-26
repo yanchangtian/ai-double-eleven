@@ -1,19 +1,24 @@
 package com.yan.study.biz.manager.point.impl;
 
 import com.yan.study.biz.common.UserPointFreezeRecordStatus;
+import com.yan.study.biz.dao.point.UserPointFreezeRecordDAO;
 import com.yan.study.biz.dao.point.entity.UserPointFreezeRecordDO;
 import com.yan.study.biz.manager.point.UserPointFreezeRecordManager;
 import org.springframework.stereotype.Component;
 
+import javax.annotation.Resource;
 import java.util.Date;
 import java.util.UUID;
 
 @Component
 public class UserPointFreezeRecordManagerImpl implements UserPointFreezeRecordManager {
 
-    @Override
-    public void insert(UserPointFreezeRecordDO userPointFreezeRecord) {
+    @Resource
+    private UserPointFreezeRecordDAO userPointFreezeRecordDAO;
 
+    @Override
+    public void insert(UserPointFreezeRecordDO userPointFreezeRecordDO) {
+        userPointFreezeRecordDAO.insert(userPointFreezeRecordDO);
     }
 
     @Override

@@ -8,7 +8,7 @@ public interface UserPointDetailManager {
 
     void insert(UserPointDetailDO userPointDetail);
 
-    UserPointDetailDO queryByDetailCode(String detailCode);
+    UserPointDetailDO queryByDetailCode(String userId, String detailCode);
 
     int update(UserPointDetailDO userPointDetail);
 

@@ -17,18 +17,18 @@ public class UserPointDetailManagerImpl implements UserPointDetailManager {
     private UserPointDetailDAO userPointDetailDAO;
 
     @Override
-    public void insert(UserPointDetailDO userPointDetail) {
-
+    public void insert(UserPointDetailDO userPointDetailDO) {
+        userPointDetailDAO.insert(userPointDetailDO);
     }
 
     @Override
-    public UserPointDetailDO queryByDetailCode(String detailCode) {
-        return null;
+    public UserPointDetailDO queryByDetailCode(String userId, String detailCode) {
+        return userPointDetailDAO.queryByDetailCode(userId, detailCode);
     }
 
     @Override
-    public int update(UserPointDetailDO userPointDetail) {
-        return 0;
+    public int update(UserPointDetailDO userPointDetailDO) {
+        return userPointDetailDAO.update(userPointDetailDO);
     }
 
     @Override

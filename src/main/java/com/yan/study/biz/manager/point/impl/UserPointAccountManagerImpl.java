@@ -15,13 +15,13 @@ public class UserPointAccountManagerImpl implements UserPointAccountManager {
     private UserPointAccountDAO userPointAccountDAO;
 
     @Override
-    public void insert(UserPointAccountDO userPointAccount) {
-
+    public void insert(UserPointAccountDO userPointAccountDO) {
+        userPointAccountDAO.insert(userPointAccountDO);
     }
 
     @Override
     public UserPointAccountDO query(String userId, String pointType) {
-        return null;
+        return userPointAccountDAO.query(userId, pointType);
     }
 
     @Override
@@ -33,17 +33,19 @@ public class UserPointAccountManagerImpl implements UserPointAccountManager {
             userPointAccount.setUserId(userId);
             userPointAccount.setPointType(pointType);
             insert(userPointAccount);
+            System.out.println("初始化用户积分账户 userId:" + userId);
         }
         return userPointAccount;
     }
 
     @Override
-    public int update(UserPointAccountDO userPointAccount) {
-        return 0;
+    public int update(UserPointAccountDO userPointAccountDO) {
+        return userPointAccountDAO.update(userPointAccountDO);
     }
 
     @Override
     public void increasePoints(String userId, String pointType, Long availablePoints) {
+        initAndGet(userId, pointType);
         userPointAccountDAO.increasePoints(userId, pointType, availablePoints);
     }
 
