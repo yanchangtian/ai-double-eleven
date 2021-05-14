@@ -55,6 +55,7 @@ public class UserPointBizManagerImpl implements UserPointBizManager {
             userPointDetail.setIdempotentId(idempotentId);
             userPointDetail.setDetailStatus(UserPointDetailStatus.RECEIVABLE.getStatus());
             userPointDetail.setGivePoints(points);
+            userPointDetail.setAvailablePoints(points);
             userPointDetail.setPreGiveTime(new Date());
             userPointDetail.setInvalidTime(pointConfig.calcPrePointInvalidTime(userPointDetail.getPreGiveTime()));
             userPointDetail.setGiveReason(reason);
@@ -77,7 +78,6 @@ public class UserPointBizManagerImpl implements UserPointBizManager {
             if (!validPointConfig(pointConfig)) {
                 return BaseResult.fail("无效的积分类型");
             }
-
             UserPointDetailDO userPointDetailDO = userPointDetailManager.queryByDetailCode(userId, detailCode);
             System.out.println(userPointDetailDO);
             if (userPointDetailDO == null) {
@@ -91,8 +91,7 @@ public class UserPointBizManagerImpl implements UserPointBizManager {
             }
 
             // 更新明细表
-            userPointDetailDO.setAvailablePoints(userPointDetailDO.getGivePoints());
-            userPointDetailDO.setGivePoints(0L);
+            userPointDetailDO.setGivePoints(userPointDetailDO.getAvailablePoints());
             userPointDetailDO.setDetailStatus(UserPointDetailStatus.RECEIVED.getStatus());
             userPointDetailDO.setEffectTime(new Date());
             userPointDetailDO.setExpireTime(pointConfig.calcPointExpireTime(userPointDetailDO.getEffectTime()));
@@ -100,12 +99,13 @@ public class UserPointBizManagerImpl implements UserPointBizManager {
             if (i < 1) {
                 throw new PointSystemException("并发修改积分明细");
             }
+            userPointDetailDO.setVersion(userPointDetailDO.getVersion() + 1);
 
             // 2. 更新账户表
             userPointAccountManager.increasePoints(userId, pointType, userPointDetailDO.getAvailablePoints());
 
             // 3. 合并积分
-            // mergePoint(userId, userPointDetailDO);
+            mergePoint(userId, userPointDetailDO);
 
             return BaseResult.success(null);
         } catch (Exception e) {
@@ -140,18 +140,20 @@ public class UserPointBizManagerImpl implements UserPointBizManager {
             userPointDetail.setPointType(pointType);
             userPointDetail.setDetailCode(UUID.randomUUID().toString().replace("-", ""));
             userPointDetail.setDetailStatus(UserPointDetailStatus.RECEIVED.getStatus());
+            userPointDetail.setGivePoints(0L);
             userPointDetail.setAvailablePoints(points);
             userPointDetail.setEffectTime(new Date());
             userPointDetail.setExpireTime(pointConfig.calcPointExpireTime(userPointDetail.getEffectTime()));
             userPointDetail.setIdempotentId(idempotentId);
             userPointDetail.setGiveReason(reason);
+            userPointDetail.setVersion(0L);
             userPointDetailManager.insert(userPointDetail);
 
             // 3. 积分账户表
             userPointAccountManager.increasePoints(userId, pointType, userPointDetail.getAvailablePoints());
 
             // 4. 合并积分
-            // mergePoint(userId, userPointDetail);
+            mergePoint(userId, userPointDetail);
 
             return BaseResult.success(null);
         } catch (Exception e) {
@@ -353,9 +355,7 @@ public class UserPointBizManagerImpl implements UserPointBizManager {
         UserPointDetailDO mergeDetail = userPointDetailManager.queryByUserIdAndIdempotentId(userId, mergeIdemId);
 
         // 如果没有创建一条新的合并记录
-
         if (mergeDetail == null) {
-
             PointConfigDO pointConfig = pointConfigManager.getPointConfig(userPointDetail.getPointType());
 
             mergeDetail = new UserPointDetailDO();
@@ -365,7 +365,6 @@ public class UserPointBizManagerImpl implements UserPointBizManager {
             mergeDetail.setIdempotentId(mergeIdemId);
             mergeDetail.setGiveReason("合并积分");
             mergeDetail.setEffectTime(userPointDetail.getEffectTime());
-            // 为什么不需要计算失效时间
             mergeDetail.setExpireTime(pointConfig.calcPointExpireTime(userPointDetail.getEffectTime()));
             mergeDetail.setGivePoints(userPointDetail.getGivePoints());
             mergeDetail.setAvailablePoints(userPointDetail.getAvailablePoints());
@@ -376,23 +375,23 @@ public class UserPointBizManagerImpl implements UserPointBizManager {
             // 如果有则合并进去
             if (UserPointDetailStatus.RECEIVED.getStatus().equals(mergeDetail.getDetailStatus())) {
                 // 已领取
-                mergeDetail.setGivePoints(mergeDetail.getGivePoints() + userPointDetail.getGivePoints());
+                // mergeDetail.setGivePoints(mergeDetail.getGivePoints() + userPointDetail.getGivePoints());
                 mergeDetail.setAvailablePoints(mergeDetail.getAvailablePoints() + userPointDetail.getAvailablePoints());
                 i = userPointDetailManager.update(mergeDetail);
             } else if (UserPointDetailStatus.FROZEN.getStatus().equals(mergeDetail.getDetailStatus())) {
                 // 已冻结
-                mergeDetail.setGivePoints(mergeDetail.getGivePoints() + userPointDetail.getGivePoints());
+                // mergeDetail.setGivePoints(mergeDetail.getGivePoints() + userPointDetail.getGivePoints());
                 mergeDetail.setAvailablePoints(mergeDetail.getAvailablePoints() + userPointDetail.getAvailablePoints());
                 mergeDetail.setDetailStatus(UserPointDetailStatus.PART_FROZEN.getStatus());
                 i = userPointDetailManager.update(mergeDetail);
             } else if (UserPointDetailStatus.PART_FROZEN.getStatus().equals(mergeDetail.getDetailStatus())) {
                 // 部分冻结
-                mergeDetail.setGivePoints(mergeDetail.getGivePoints() + userPointDetail.getGivePoints());
+                // mergeDetail.setGivePoints(mergeDetail.getGivePoints() + userPointDetail.getGivePoints());
                 mergeDetail.setAvailablePoints(mergeDetail.getAvailablePoints() + userPointDetail.getAvailablePoints());
                 i = userPointDetailManager.update(mergeDetail);
             } else if (UserPointDetailStatus.CONSUMED.getStatus().equals(mergeDetail.getDetailStatus())) {
                 // 已消耗
-                mergeDetail.setGivePoints(mergeDetail.getGivePoints() + userPointDetail.getGivePoints());
+                // mergeDetail.setGivePoints(mergeDetail.getGivePoints() + userPointDetail.getGivePoints());
                 mergeDetail.setAvailablePoints(mergeDetail.getAvailablePoints() + userPointDetail.getAvailablePoints());
                 mergeDetail.setDetailStatus(UserPointDetailStatus.RECEIVED.getStatus());
                 i = userPointDetailManager.update(mergeDetail);

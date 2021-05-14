@@ -6,6 +6,8 @@ import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
+import java.util.List;
+
 public interface UserPointDetailDAO {
 
     String ALL_COLUMN = "id, user_id as userId, point_type as pointType, detail_code as detailCode, " +
@@ -66,7 +68,6 @@ public interface UserPointDetailDAO {
         "UPDATE",
         TABLE_NAME,
         "SET",
-        "<if test='detailCode != null'> detail_code = #{detailCode}, </if>",
         "<if test='giveReason != null'> give_reason = #{giveReason}, </if>",
         "<if test='idempotentId != null'> idempotent_id = #{idempotentId}, </if>",
         "<if test='givePoints != null'> give_points = #{givePoints}, </if>",
@@ -82,7 +83,7 @@ public interface UserPointDetailDAO {
         "<if test='mergedTime != null'> merged_time = #{mergedTime}, </if>",
         "<if test='detailStatus != null'> detail_status = #{detailStatus}, </if>",
         "version = version + 1",
-        "WHERE user_id = #{userId} AND point_type = #{pointType} AND version = #{version}",
+        "WHERE user_id = #{userId} AND point_type = #{pointType} AND detail_code = #{detailCode} AND version = #{version}",
         "</script>"
     })
     int update(UserPointDetailDO userPointDetailDO);
@@ -95,4 +96,23 @@ public interface UserPointDetailDAO {
         "WHERE user_id = #{userId} AND detail_code = #{detailCode}"
     })
     UserPointDetailDO queryByDetailCode(@Param("userId") String userId, @Param("detailCode") String detailCode);
+
+    @Select({
+        "SELECT",
+        ALL_COLUMN,
+        "FROM",
+        TABLE_NAME,
+        "WHERE user_id = #{userId} AND idempotent_id = #{idempotentId}"
+    })
+    UserPointDetailDO queryByUserIdAndIdempotentId(@Param("userId") String userId, @Param("idempotentId") String idempotentId);
+
+    @Select({
+        "SELECT",
+        ALL_COLUMN,
+        "FROM",
+        TABLE_NAME,
+        "WHERE user_id = #{userId} AND point_type = #{pointType} AND detail_status in ('已领取', '部分冻结')"
+    })
+    List<UserPointDetailDO> queryAvailablePointRecord(@Param("userId") String userId, @Param("pointType") String pointType);
+
 }

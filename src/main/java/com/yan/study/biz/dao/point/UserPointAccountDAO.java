@@ -45,8 +45,8 @@ public interface UserPointAccountDAO {
     Long queryAvailablePoint(@Param("userId") String userId, @Param("pointType") String pointType);
 
     @Update({
-        "UPDATE " + TABLE_NAME + " SET available_point = available_point + #{availablePoint} " +
-        "WHERE user_id = #{userId} AND point_type = #{pointType}"
+        "UPDATE " + TABLE_NAME + " SET available_point = available_point + #{availablePoint}, " +
+        "received_point = received_point + #{availablePoint} WHERE user_id = #{userId} AND point_type = #{pointType}"
     })
     void increasePoints(@Param("userId") String userId,
                         @Param("pointType") String pointType,

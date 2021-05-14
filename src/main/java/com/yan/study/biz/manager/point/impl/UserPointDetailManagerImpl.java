@@ -33,7 +33,7 @@ public class UserPointDetailManagerImpl implements UserPointDetailManager {
 
     @Override
     public List<UserPointDetailDO> queryAvailablePointRecord(String userId, String pointType) {
-        return null;
+        return userPointDetailDAO.queryAvailablePointRecord(userId, pointType);
     }
 
     @Override
@@ -65,7 +65,7 @@ public class UserPointDetailManagerImpl implements UserPointDetailManager {
 
     @Override
     public UserPointDetailDO queryByUserIdAndIdempotentId(String userId, String idempotentId) {
-        return null;
+        return userPointDetailDAO.queryByUserIdAndIdempotentId(userId, idempotentId);
     }
 
 }
