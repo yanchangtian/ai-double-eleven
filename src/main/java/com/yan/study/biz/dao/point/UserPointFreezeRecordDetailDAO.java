@@ -2,7 +2,11 @@ package com.yan.study.biz.dao.point;
 
 import com.yan.study.biz.dao.point.entity.UserPointFreezeRecordDetailDO;
 import org.apache.ibatis.annotations.Insert;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
+
+import java.util.List;
 
 public interface UserPointFreezeRecordDetailDAO {
 
@@ -42,5 +46,14 @@ public interface UserPointFreezeRecordDetailDAO {
         "</script>"
     })
     int update(UserPointFreezeRecordDetailDO userPointFreezeRecordDetailDO);
+
+    @Select({
+       "SELECT",
+       ALL_COLUMN,
+       "FROM",
+       TABLE_NAME,
+       "WHERE freeze_code = #{freezeCode}"
+    })
+    List<UserPointFreezeRecordDetailDO> queryByFreezeCode(@Param("freezeCode") String freezeCode);
 
 }

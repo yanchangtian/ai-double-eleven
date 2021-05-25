@@ -39,13 +39,13 @@ public class UserPointFreezeRecordManagerImpl implements UserPointFreezeRecordMa
     }
 
     @Override
-    public UserPointFreezeRecordDO queryByCode(String userId, String freezeRecordCode) {
-        return null;
+    public UserPointFreezeRecordDO queryByFreezeCode(String userId, String freezeCode) {
+        return userPointFreezeRecordDAO.queryByFreezeCode(userId, freezeCode);
     }
 
     @Override
     public int update(UserPointFreezeRecordDO userPointFreezeRecord) {
-        return 0;
+        return userPointFreezeRecordDAO.update(userPointFreezeRecord);
     }
 
 }

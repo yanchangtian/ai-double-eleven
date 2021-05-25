@@ -31,7 +31,7 @@ public interface UserPointFreezeRecordManager {
      * @param freezeRecordCode 冻结记录code
      * @return 积分冻结记录
      */
-    UserPointFreezeRecordDO queryByCode(String userId, String freezeRecordCode);
+    UserPointFreezeRecordDO queryByFreezeCode(String userId, String freezeRecordCode);
 
     /**
      * 更新积分冻结记录

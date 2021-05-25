@@ -31,9 +31,16 @@ public class Application {
 //				("12345", "FISH", 10L, "12345-child-01", "give points");
 //		System.out.println(result);
 //
-		BaseResult<String> result = bean.freezePoint
-				("12345", "FISH", 10L, "test-freeze", "test freeze");
+//		BaseResult<String> result = bean.freezePoint
+//				("12345", "FISH", 10L, "test-freeze", "test freeze");
+//		System.out.println(result);
+
+//		BaseResult<Void> result = bean.consumeFreezePoint("12345", "FISH", "37270c941e764e9da3426c4653fa40e4");
+//		System.out.println(result);
+
+		BaseResult<Void> result = bean.unfreezePoint("12345", "FISH", "e395747257fa4a52a9980e354c3f8243");
 		System.out.println(result);
+
 	}
 
 }

@@ -6,6 +6,7 @@ import com.yan.study.biz.manager.point.UserPointFreezeRecordDetailManager;
 import org.springframework.stereotype.Component;
 
 import javax.annotation.Resource;
+import java.util.List;
 
 @Component
 public class UserPointFreezeRecordDetailManagerImpl implements UserPointFreezeRecordDetailManager {
@@ -16,6 +17,11 @@ public class UserPointFreezeRecordDetailManagerImpl implements UserPointFreezeRe
     @Override
     public void insert(UserPointFreezeRecordDetailDO userPointFreezeRecordDetail) {
         userPointFreezeRecordDetailDAO.insert(userPointFreezeRecordDetail);
+    }
+
+    @Override
+    public List<UserPointFreezeRecordDetailDO> queryByFreezeCode(String freezeCode) {
+        return userPointFreezeRecordDetailDAO.queryByFreezeCode(freezeCode);
     }
 
 }

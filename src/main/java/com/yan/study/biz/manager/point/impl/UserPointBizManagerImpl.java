@@ -261,7 +261,7 @@ public class UserPointBizManagerImpl implements UserPointBizManager {
             }
 
             // 查询冻结记录, 判断状态
-            UserPointFreezeRecordDO freezeRecord = userPointFreezeRecordManager.queryByCode(userId, freezeRecordCode);
+            UserPointFreezeRecordDO freezeRecord = userPointFreezeRecordManager.queryByFreezeCode(userId, freezeRecordCode);
 
             if (freezeRecord == null) {
                 return BaseResult.fail("冻结记录不存在");
@@ -274,19 +274,54 @@ public class UserPointBizManagerImpl implements UserPointBizManager {
             }
 
             // 更新用户账户
-//            UserPointAccountDO userPointAccount = userPointAccountManager.initAndGet(userId, pointType);
-//            userPointAccount.setFreezePoint(userPointAccount.getFreezePoint() - freezeRecord.getFreezePoints());
-//            userPointAccount.setAvailablePoint(userPointAccount.getAvailablePoint() + freezeRecord.getFreezePoints());
-//            int i = userPointAccountManager.update(userPointAccount);
-//            if (i < 1) {
-//                throw new PointSystemException("并发更新积分账户");
-//            }
+            UserPointAccountDO userPointAccount = userPointAccountManager.initAndGet(userId, pointType);
+            userPointAccount.setFreezePoint(userPointAccount.getFreezePoint() - freezeRecord.getFreezePoints());
+            userPointAccount.setAvailablePoint(userPointAccount.getAvailablePoint() + freezeRecord.getFreezePoints());
+            int i = userPointAccountManager.update(userPointAccount);
+            if (i < 1) {
+                throw new PointSystemException("并发更新积分账户");
+            }
 
             // 更新冻结记录
             freezeRecord.setFreezeRecordStatus(UserPointFreezeRecordStatus.UNFROZE.getStatus());
-            int i = userPointFreezeRecordManager.update(freezeRecord);
+            i = userPointFreezeRecordManager.update(freezeRecord);
             if (i < 1) {
                 throw new PointSystemException("并发修改冻结记录");
+            }
+
+            // 更新积分明细表
+            List<UserPointFreezeRecordDetailDO> freezeDetailList = userPointFreezeRecordDetailManager.queryByFreezeCode(freezeRecord.getFreezeCode());
+
+            for (UserPointFreezeRecordDetailDO freezeRecordDetail : freezeDetailList) {
+                UserPointDetailDO pointDetail = userPointDetailManager.queryByDetailCode(userId, freezeRecordDetail.getDetailCode());
+                if (UserPointDetailStatus.FROZEN.getStatus().equals(pointDetail.getDetailStatus())
+                        || UserPointDetailStatus.PART_FROZEN.getStatus().equals(pointDetail.getDetailStatus())) {
+                    if (freezeRecordDetail.getFreezePoints() < pointDetail.getFreezePoints()) {
+                        pointDetail.setDetailStatus(UserPointDetailStatus.PART_FROZEN.getStatus());
+                    } else if (freezeRecordDetail.getFreezePoints().equals(pointDetail.getFreezePoints())) {
+                        pointDetail.setDetailStatus(UserPointDetailStatus.RECEIVED.getStatus());
+                    } else {
+                        throw new PointSystemException("");
+                    }
+                    pointDetail.setFreezePoints(pointDetail.getFreezePoints() - freezeRecordDetail.getFreezePoints());
+                    pointDetail.setAvailablePoints(freezeRecordDetail.getFreezePoints());
+                } else if (UserPointDetailStatus.PART_EXPIRED.getStatus().equals(pointDetail.getDetailStatus())) {
+                    if (freezeRecordDetail.getFreezePoints() < pointDetail.getFreezePoints()) {
+                        pointDetail.setDetailStatus(UserPointDetailStatus.PART_EXPIRED.getStatus());
+                    } else if (freezeRecordDetail.getFreezePoints().equals(pointDetail.getFreezePoints())) {
+                        pointDetail.setDetailStatus(UserPointDetailStatus.EXPIRED.getStatus());
+                    } else {
+                        throw new PointSystemException("");
+                    }
+                    pointDetail.setFreezePoints(pointDetail.getFreezePoints() - freezeRecordDetail.getFreezePoints());
+                    pointDetail.setExpiredPoints(freezeRecordDetail.getFreezePoints());
+                } else {
+                    throw new PointSystemException("");
+                }
+                i = userPointDetailManager.update(pointDetail);
+                if (i < 1) {
+                    throw new PointSystemException("并发更新积分明细记录");
+                }
             }
 
             return BaseResult.success(null);
@@ -306,7 +341,7 @@ public class UserPointBizManagerImpl implements UserPointBizManager {
             }
 
             // 查询冻结记录, 判断状态
-            UserPointFreezeRecordDO freezeRecord = userPointFreezeRecordManager.queryByCode(userId, freezeRecordCode);
+            UserPointFreezeRecordDO freezeRecord = userPointFreezeRecordManager.queryByFreezeCode(userId, freezeRecordCode);
 
             if (freezeRecord == null) {
                 return BaseResult.fail("冻结记录不存在");
@@ -319,13 +354,55 @@ public class UserPointBizManagerImpl implements UserPointBizManager {
             }
 
             // 更新用户账户 目测更新用户账户表中的冻结积分字段没有意义
-//            UserPointAccountDO userPointAccount = userPointAccountManager.initAndGet(userId, pointType);
-//            userPointAccount.setFreezePoint(userPointAccount.getFreezePoint() - freezeRecord.getFreezePoints());
-//            userPointAccount.setAvailablePoint(userPointAccount.getAvailablePoint() + freezeRecord.getFreezePoints());
-//            int i = userPointAccountManager.update(userPointAccount);
-//            if (i < 1) {
-//                throw new PointSystemException("并发更新积分账户");
-//            }
+            UserPointAccountDO userPointAccount = userPointAccountManager.initAndGet(userId, pointType);
+            userPointAccount.setFreezePoint(userPointAccount.getFreezePoint() - freezeRecord.getFreezePoints());
+            userPointAccount.setConsumedPoint(freezeRecord.getFreezePoints());
+            int i = userPointAccountManager.update(userPointAccount);
+            if (i < 1) {
+                throw new PointSystemException("并发更新积分账户");
+            }
+
+            // 更新冻结记录表
+            freezeRecord.setFreezeRecordStatus(UserPointFreezeRecordStatus.CONSUMED.getStatus());
+            i = userPointFreezeRecordManager.update(freezeRecord);
+            if (i < 1) {
+                throw new PointSystemException("并发更新冻结记录");
+            }
+
+            // 更新积分明细表
+            List<UserPointFreezeRecordDetailDO> freezeDetailList = userPointFreezeRecordDetailManager.queryByFreezeCode(freezeRecord.getFreezeCode());
+
+            for (UserPointFreezeRecordDetailDO freezeRecordDetail : freezeDetailList) {
+                UserPointDetailDO pointDetail = userPointDetailManager.queryByDetailCode(userId, freezeRecordDetail.getDetailCode());
+                if (UserPointDetailStatus.FROZEN.getStatus().equals(pointDetail.getDetailStatus())
+                        || UserPointDetailStatus.PART_FROZEN.getStatus().equals(pointDetail.getDetailStatus())) {
+                    if (freezeRecordDetail.getFreezePoints() < pointDetail.getFreezePoints()) {
+                        pointDetail.setDetailStatus(UserPointDetailStatus.PART_FROZEN.getStatus());
+                    } else if (freezeRecordDetail.getFreezePoints().equals(pointDetail.getFreezePoints())) {
+                        pointDetail.setDetailStatus(UserPointDetailStatus.CONSUMED.getStatus());
+                    } else {
+                        throw new PointSystemException("");
+                    }
+                    pointDetail.setFreezePoints(pointDetail.getFreezePoints() - freezeRecordDetail.getFreezePoints());
+                    pointDetail.setConsumedPoints(freezeRecordDetail.getFreezePoints());
+                } else if (UserPointDetailStatus.PART_EXPIRED.getStatus().equals(pointDetail.getDetailStatus())) {
+                    if (freezeRecordDetail.getFreezePoints() < pointDetail.getFreezePoints()) {
+                        pointDetail.setDetailStatus(UserPointDetailStatus.PART_EXPIRED.getStatus());
+                    } else if (freezeRecordDetail.getFreezePoints().equals(pointDetail.getFreezePoints())) {
+                        pointDetail.setDetailStatus(UserPointDetailStatus.CONSUMED.getStatus());
+                    } else {
+                        throw new PointSystemException("");
+                    }
+                    pointDetail.setFreezePoints(pointDetail.getFreezePoints() - freezeRecordDetail.getFreezePoints());
+                    pointDetail.setConsumedPoints(freezeRecordDetail.getFreezePoints());
+                } else {
+                    throw new PointSystemException("");
+                }
+                i = userPointDetailManager.update(pointDetail);
+                if (i < 1) {
+                    throw new PointSystemException("并发更新积分明细记录");
+                }
+            }
 
             return BaseResult.success(null);
 

@@ -1,5 +1,6 @@
 package com.yan.study.biz.dao.point.entity;
 
+import com.yan.study.biz.common.UserPointDetailStatus;
 import lombok.Data;
 
 import java.util.Date;
@@ -73,6 +74,7 @@ public class UserPointDetailDO {
     private Date mergedTime;
     /**
      * 积分明细状态
+     * @see UserPointDetailStatus
      */
     private String detailStatus;
     /**

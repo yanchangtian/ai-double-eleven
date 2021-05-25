@@ -2,6 +2,8 @@ package com.yan.study.biz.dao.point;
 
 import com.yan.study.biz.dao.point.entity.UserPointFreezeRecordDO;
 import org.apache.ibatis.annotations.Insert;
+import org.apache.ibatis.annotations.Param;
+import org.apache.ibatis.annotations.Select;
 import org.apache.ibatis.annotations.Update;
 
 public interface UserPointFreezeRecordDAO {
@@ -45,9 +47,18 @@ public interface UserPointFreezeRecordDAO {
         "SET",
         "<if test='freezeRecordStatus != null'> freeze_record_status = #{freezeRecordStatus}, </if>",
         "version = version + 1",
-        "WHERE user_id = #{userId} AND point_type = #{pointType} AND version = #{version}",
+        "WHERE user_id = #{userId} AND freeze_code = #{freezeCode} AND version = #{version}",
         "</script>"
     })
     int update(UserPointFreezeRecordDO userPointFreezeRecordDO);
+
+    @Select({
+        "SELECT",
+        ALL_COLUMN,
+        "FROM",
+        TABLE_NAME,
+        "WHERE freeze_code = #{freezeCode}"
+    })
+    UserPointFreezeRecordDO queryByFreezeCode(@Param("userId") String userId, @Param("freezeCode") String freezeCode);
 
 }
