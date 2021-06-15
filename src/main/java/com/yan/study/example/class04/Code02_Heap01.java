@@ -36,6 +36,7 @@ public class Code02_Heap01 {
             return ans;
         }
 
+        // heapInsert 往上找
         private void heapInsert(int[] arr, int index) {
             while (arr[index] > arr[(index - 1) / 2]) {
                 swap(arr, index, (index - 1) / 2);
@@ -43,6 +44,7 @@ public class Code02_Heap01 {
             }
         }
 
+        // 往下找
         private void heapify(int[] arr, int index, int heapSize) {
             int left = index * 2 + 1;
             while (left < heapSize) {

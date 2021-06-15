@@ -1,19 +1,15 @@
 package com.yan.study.example.class10;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Queue;
+import java.util.*;
 
 public class Code03_TopologySort {
 
-	// directed graph and no loop
+	// 有向无环图
 	public static List<Node> sortedTopology(Graph graph) {
-		// key：某一个node
-		// value：剩余的入度
-		HashMap<Node, Integer> inMap = new HashMap<>();
-		// 入度为0的点，才能进这个队列
+		// key: 某一个node
+		// value: 剩余的入度
+		Map<Node, Integer> inMap = new HashMap<>();
+		// 入度为0的点, 才能进这个队列
 		Queue<Node> zeroInQueue = new LinkedList<>();
 		for (Node node : graph.nodes.values()) {
 			inMap.put(node, node.in);
@@ -35,4 +31,5 @@ public class Code03_TopologySort {
 		}
 		return result;
 	}
+
 }
